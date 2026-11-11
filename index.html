@@ -1,0 +1,314 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#10243a"><meta name="apple-mobile-web-app-capable" content="yes">
+<link rel="manifest" href="manifest.webmanifest"><title>Калькуляторы ОАР</title>
+<style>
+:root{--bg:#f3f6f9;--card:#fff;--ink:#172a3b;--muted:#627487;--line:#dce5ed;--blue:#1769aa;--navy:#10243a;--amber:#fff2d4;--red:#ffe7e7;--green:#e8f6ee}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--ink);font:16px -apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}
+header{background:var(--navy);color:#fff;padding:calc(15px + env(safe-area-inset-top)) 16px 15px;position:sticky;top:0;z-index:5}h1{font-size:20px;margin:0 0 3px}header small{color:#cbd9e7}
+nav{display:flex;gap:7px;overflow:auto;padding:9px 10px;background:#e8eef4;position:sticky;top:74px;z-index:4}nav button{white-space:nowrap;border:1px solid var(--line);background:#fff;border-radius:22px;padding:9px 13px;font-weight:650;color:var(--ink)}nav button.active{background:var(--blue);color:#fff;border-color:var(--blue)}
+main{max-width:940px;margin:auto;padding:12px 12px 45px}section{display:none}section.active{display:block}.card{background:var(--card);border:1px solid var(--line);border-radius:15px;padding:15px;margin:10px 0;box-shadow:0 2px 9px #14283b08}
+h2{font-size:19px;margin:2px 0 12px}h3{font-size:15px;margin:14px 0 8px}.grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}.field{min-width:0}label{display:block;font-size:13px;color:var(--muted);font-weight:650;margin-bottom:5px}
+input,select{width:100%;min-width:0;border:1px solid #cbd7e2;border-radius:10px;padding:11px 10px;font-size:16px;background:#fff;color:var(--ink)}input:focus,select:focus{outline:2px solid #a9d1f1}
+.result{background:#edf6ff;border:1px solid #cbe2f5;border-radius:12px;padding:13px;margin-top:12px}.result strong{font-size:22px;color:#105b96}.muted{font-size:13px;color:var(--muted);line-height:1.48}.notice{background:var(--amber);border-radius:10px;padding:11px 12px;font-size:13px;line-height:1.5;margin:10px 0}.notice.red{background:var(--red)}.notice.green{background:var(--green)}
+.actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px}button.primary,button.secondary,button.danger{border:0;border-radius:10px;padding:11px 14px;font-size:14px;font-weight:700}button.primary{background:var(--blue);color:#fff}button.secondary{background:#e8eef4;color:var(--ink)}button.danger{background:#ffe7e7;color:#8a2020}
+hr{border:0;border-top:1px solid var(--line);margin:15px 0}.pill{display:inline-block;background:#edf1f5;border-radius:30px;padding:4px 9px;font-size:12px;color:#43586b}
+table{border-collapse:collapse;width:100%;font-size:13px}td,th{padding:8px;border-bottom:1px solid var(--line);text-align:left;vertical-align:top}
+@media(min-width:700px){main{padding-top:20px}.grid{grid-template-columns:repeat(3,minmax(0,1fr))}}@media(max-width:560px){.card{padding:13px}nav{top:72px}}
+</style></head>
+<body>
+<header><h1>Калькуляторы ОАР</h1><small>Клинические расчёты · локальное хранение · версия 0.5</small></header>
+<nav id="tabs">
+<button class="active" data-tab="mass">Масса тела</button><button data-tab="renal">СКФ</button><button data-tab="aki">ОПП</button><button data-tab="potassium">Калий</button><button data-tab="scores">Шкалы</button><button data-tab="airway">Дыхательные пути</button><button data-tab="infusion">Инфузоматы</button><button data-tab="history">История</button><button data-tab="drugs">Препараты</button>
+</nav>
+<main>
+<section id="mass" class="active"><div class="card"><h2>Антропометрия и расчётная масса</h2>
+<div class="grid"><div class="field"><label>Пол</label><select id="sex"><option value="m">Мужской</option><option value="f">Женский</option></select></div><div class="field"><label>Рост, см</label><input id="height" type="number" value="175" min="80" max="250"></div><div class="field"><label>Фактическая масса, кг</label><input id="weight" type="number" value="80" min="1" max="400"></div></div>
+<div class="result" id="massOut"></div><div class="actions"><button class="secondary" id="saveMass">Сохранить расчёт</button></div><p class="muted">IBW/PBW по Devine: мужчины 50 + 0,9 × (рост − 152,4); женщины 45,5 + 0,9 × (рост − 152,4). AdjBW = IBW + 0,4 × (фактическая масса − IBW).</p>
+<hr><h3>Какую массу использовать</h3>
+<div class="notice"><b>PBW (predicted body weight, расчётная масса):</b> используйте прежде всего для расчёта дыхательного объёма при ИВЛ (обычно 6–8 мл/кг PBW; при ARDS часто около 6 мл/кг PBW). Основана на росте и поле, а не на фактической массе. Не использовать автоматически для расчёта всех лекарств.</div>
+<div class="notice"><b>IBW (ideal body weight, идеальная масса):</b> антропометрический ориентир по формуле Devine. Может применяться как отправная точка для отдельных лекарств и расчётов, если это прямо указано в инструкции/протоколе. Не является универсальной «дозировочной массой».</div>
+<div class="notice"><b>AdjBW (adjusted body weight, скорректированная масса):</b> часто рассматривается при ожирении, когда фактическая масса может завышать объём распределения для некоторых гидрофильных препаратов. В этом калькуляторе используется AdjBW = IBW + 0,4 × (TBW − IBW). Коэффициент 0,4 — распространённый ориентир, но не универсальный; конкретная масса зависит от препарата, фармакокинетики и локального протокола.</div>
+<div class="notice red"><b>Важно:</b> для вазопрессоров, седативных, миорелаксантов, антибиотиков и других препаратов правила выбора массы различаются. Сверяйте конкретный препарат и клиническую ситуацию; при выраженных отёках/асците масса тела также может быть нерепрезентативна.</div></div></section>
+
+<section id="renal"><div class="card"><h2>СКФ и клиренс креатинина</h2>
+<div class="grid"><div class="field"><label>Пол</label><select id="rsex"><option value="m">Мужской</option><option value="f">Женский</option></select></div><div class="field"><label>Возраст, лет</label><input id="age" type="number" value="65" min="18" max="120"></div><div class="field"><label>Креатинин</label><input id="creat" type="number" value="100" min="1" step=".1"></div><div class="field"><label>Единицы</label><select id="crunit"><option value="umol">мкмоль/л</option><option value="mg">мг/дл</option></select></div><div class="field"><label>Масса, кг (Cockcroft–Gault)</label><input id="rweight" type="number" value="80" min="1"></div></div>
+<div class="result" id="renalOut"></div><div class="notice" id="ckdInfo"></div><div class="actions"><button class="secondary" id="saveRenal">Сохранить расчёт</button></div><p class="muted">CKD-EPI 2021: мл/мин/1,73 м²; Cockcroft–Gault: мл/мин. Для Cockcroft–Gault введённая масса используется напрямую — выбор массы при ожирении/отёках требует клинического решения. При ОПП и нестабильном креатинине формулы ненадёжны; дозирование ряда препаратов требует другого метода/коррекции.</p></div></section>
+
+<section id="aki"><div class="card"><h2>Острое повреждение почек · KDIGO</h2>
+<p class="muted">Оценка по критериям креатинина и диуреза. Степень определяется по наиболее тяжёлому критерию. Для креатинина укажите исходный уровень и интервал его изменения; для диуреза — средний темп за выбранный период.</p>
+<div class="grid">
+<div class="field"><label>Исходный креатинин</label><input id="akiBase" type="number" value="80" min="0" step=".1"></div>
+<div class="field"><label>Текущий креатинин</label><input id="akiCurrent" type="number" value="120" min="0" step=".1"></div>
+<div class="field"><label>Единицы креатинина</label><select id="akiUnit"><option value="umol">мкмоль/л</option><option value="mg">мг/дл</option></select></div>
+<div class="field"><label>Интервал между анализами</label><select id="akiWindow"><option value="48">≤48 часов</option><option value="7">≤7 суток</option><option value="other">Более 7 суток / неизвестен</option></select></div>
+<div class="field"><label>Масса пациента, кг</label><input id="akiWeight" type="number" value="70" min="1"></div>
+<div class="field"><label>Диурез, мл/кг/ч</label><input id="akiUo" type="number" value="0.7" min="0" step=".01"></div>
+<div class="field"><label>Длительность такого диуреза, ч</label><input id="akiDuration" type="number" value="6" min="0" step=".5"></div>
+<div class="field"><label>Начата заместительная почечная терапия?</label><select id="akiRrt"><option value="0">Нет</option><option value="1">Да</option></select></div>
+</div>
+<div class="result" id="akiOut"></div>
+<div class="notice red"><b>Ограничения:</b> KDIGO требует динамики креатинина и диуреза. При отсутствии достоверного исходного креатинина оценка по креатинину может быть невозможна. Диурез следует оценивать за фактические интервалы времени, исключив обструкцию катетера и учитывая диуретики, гемодинамику и контекст пациента. eGFR/CKD-EPI не предназначена для стадирования ОПП при нестабильном креатинине.</div>
+<div class="actions"><button class="secondary" id="saveAki">Сохранить оценку ОПП</button></div>
+<p class="muted">KDIGO: стадия 1 — SCr 1,5–1,9× исходного или прирост ≥26,5 мкмоль/л за 48 ч; стадия 2 — 2,0–2,9×; стадия 3 — ≥3×, SCr ≥353,6 мкмоль/л или начало ЗПТ. Критерии диуреза: &lt;0,5 мл/кг/ч 6–12 ч — стадия 1; &lt;0,5 ≥12 ч — стадия 2; &lt;0,3 ≥24 ч или анурия ≥12 ч — стадия 3.</p>
+</div></section>
+
+<section id="potassium"><div class="card"><h2>Расчёт дефицита калия · KCl 4%</h2>
+<p class="muted">Ориентировочный расчёт по модели MedSoftPro. Введите текущий K⁺, массу пациента и желаемый целевой уровень K⁺.</p>
+<div class="grid">
+<div class="field"><label>Калий плазмы, ммоль/л</label><input id="klevel" type="number" value="2.5" min="1" max="7" step=".1"></div>
+<div class="field"><label>Масса пациента, кг</label><input id="kweight" type="number" value="70" min="1" max="300" step=".1"></div>
+<div class="field"><label>Целевой K⁺, ммоль/л</label><input id="ktarget" type="number" value="4.0" min="2" max="6" step=".1"></div>
+</div>
+<div class="result" id="kOut"></div>
+<div class="actions"><button class="secondary" id="saveK">Сохранить расчёт</button></div>
+<div class="notice red"><b>Важно: расчётная оценка, не готовое назначение.</b> Модель рассчитывает ориентировочное количество для изменения K⁺ от текущего значения до выбранного целевого уровня. Она не учитывает причину гипокалиемии, внутриклеточное перераспределение, продолжающиеся потери, КОС, Mg²⁺ и функцию почек. Рассчитанное количество не следует вводить одномоментно или автоматически считать полным объёмом инфузии. Восполнение проводят этапами с повторным лабораторным контролем и клинической переоценкой.</div>
+<h3>Напоминания по разведению и безопасности инфузии</h3>
+<div class="notice"><b>Концентрат KCl 4%:</b> 40 мг KCl/мл. Один ммоль KCl соответствует 74,55 мг KCl; следовательно, 1 мл 4% раствора содержит приблизительно 0,537 ммоль K⁺. Объём концентрата в результате — только эквивалент рассчитанного количества KCl, не объём для непосредственного введения.</div>
+<div class="notice"><b>Разведение:</b> для периферического введения распространённый ориентир — не более 40 ммоль/л, что соответствует примерно 2,98 мг KCl/мл готового раствора. Предпочтительны готовые промышленные разведённые растворы. Приготовление из концентрата — только по утверждённой локальной процедуре, с учётом конечного объёма, совместимости растворителя и маркировки. Не путать 40 мг/мл в ампуле KCl 4% с концентрацией готовой инфузии.</div>
+<div class="notice"><b>Скорость:</b> обычная скорость в/в введения у взрослых, как правило, не должна превышать 10 ммоль/ч (около 746 мг KCl/ч). Скорости выше 20 ммоль/ч (около 1 491 мг KCl/ч) требуют специальных условий, непрерывного ЭКГ-мониторинга и частого контроля K⁺; ориентироваться на локальный протокол. Все источники поступления калия суммируются.</div>
+<div class="notice"><b>Суточное поступление:</b> в ряде инструкций к препаратам приводится верхний ориентир до 3 ммоль/кг/24 ч (около 224 мг KCl/кг/24 ч), но это не универсально безопасная цель и не автоматический лимит для каждого пациента. При почечной дисфункции, олигурии/анурии и сниженной экскреции калия требуется уменьшение дозы или отказ от введения до оценки; учитывайте все пути поступления и локальный протокол.</div>
+<div class="notice red"><b>Обязательные меры безопасности:</b> концентрат KCl никогда не вводить неразведённым болюсно. Вводить инфузионным насосом. Контролировать K⁺, Mg²⁺, креатинин, диурез, ЭКГ по тяжести состояния и место венозного доступа. При возможности предпочитать пероральное восполнение у стабильного пациента с функционирующим ЖКТ; внутривенное — по клиническим показаниям.</div>
+<p class="muted">Формула модели MedSoftPro: D = масса тела × 0,2 × (целевой K⁺ − текущий K⁺). Коэффициент 0,2 соответствует принятому в этой модели внеклеточному объёму. Это эмпирическая модель, а не универсально валидированный способ предсказать индивидуальную дозу. Источники и ограничения: MedSoftPro; NHS SPS; SmPC препаратов калия хлорида.</p>
+</div></section>
+
+<section id="scores"><div class="card"><h2>SOFA-2 (2025)</h2><p class="muted">Заполняйте максимальные значения поддержки/органной дисфункции в пределах одного 24-часового окна. Для итоговой суммы берётся максимальный балл каждой из 6 систем за эти 24 часа.</p>
+<div class="grid">
+<div class="field"><label>GCS, баллы</label><input id="gcs" type="number" min="3" max="15" value="15"></div><div class="field"><label>Препараты для лечения делирия необходимы?</label><select id="delirium"><option value="0">Нет</option><option value="1">Да</option></select></div>
+<div class="field"><label>PaO₂/FiO₂, мм рт. ст.</label><input id="pf" type="number" min="1" value="400"></div><div class="field"><label>Расширенная респираторная поддержка?</label><select id="advanced"><option value="0">Нет</option><option value="1">Да</option></select></div>
+<div class="field"><label>ECMO?</label><select id="ecmo"><option value="0">Нет</option><option value="1">Да</option></select></div><div class="field"><label>MAP, мм рт. ст.</label><input id="map" type="number" value="75"></div>
+<div class="field"><label>Норадреналин + адреналин, мкг/кг/мин суммарно</label><input id="ne" type="number" min="0" step=".01" value="0"></div><div class="field"><label>Другой вазопрессор или инотроп</label><select id="otherVaso"><option value="0">Нет</option><option value="1">Да</option></select></div>
+<div class="field"><label>Механическая поддержка кровообращения</label><select id="circSupport"><option value="0">Нет</option><option value="1">Да</option></select></div><div class="field"><label>Общий билирубин, мкмоль/л</label><input id="bilirubin" type="number" min="0" value="15"></div>
+<div class="field"><label>Креатинин, мкмоль/л</label><input id="sCr" type="number" min="0" value="90"></div><div class="field"><label>Диурез, мл/кг/ч</label><input id="uo" type="number" min="0" step=".01" value="1"></div>
+<div class="field"><label>Длительность низкого диуреза / анурии</label><select id="uoDuration"><option value="0">Нет критериев</option><option value="1">UO &lt;0,5: 6–12 ч</option><option value="2">UO &lt;0,5: ≥12 ч</option><option value="3">UO &lt;0,3: ≥24 ч</option><option value="4">Анурия ≥12 ч</option></select></div>
+<div class="field"><label>ЗПТ проводится или выполнены критерии SOFA-2</label><select id="rrt"><option value="0">Нет</option><option value="1">Да</option></select></div><div class="field"><label>Тромбоциты, ×10⁹/л</label><input id="platelets" type="number" min="0" value="200"></div>
+</div><div class="result" id="sofaOut"></div><div class="actions"><button class="secondary" id="saveSofa">Сохранить SOFA-2</button></div>
+<div class="notice">Респираторный балл 3–4 требует соответствующего уровня расширенной вентиляционной поддержки; критерии «advanced ventilatory support» и контекст ECMO уточняйте по оригинальной статье. Вазопрессоры учитываются при непрерывной в/в инфузии не менее 1 часа. При неполных данных и хронической ЗПТ учитывайте сноски оригинальной шкалы.</div>
+<hr><h2>SMART-COP</h2><div class="grid">
+<div class="field"><label>Возраст, лет</label><input id="mcAge" type="number" value="60"></div><div class="field"><label>САД, мм рт. ст.</label><input id="sbp" type="number" value="120"></div>
+<div class="field"><label>Мультилобарная инфильтрация</label><select id="multilobar"><option value="0">Нет</option><option value="1">Да</option></select></div><div class="field"><label>Альбумин, г/л</label><input id="albumin" type="number" value="38"></div>
+<div class="field"><label>ЧДД, /мин</label><input id="rr" type="number" value="18"></div><div class="field"><label>ЧСС, /мин</label><input id="hr" type="number" value="90"></div>
+<div class="field"><label>Нарушение сознания</label><select id="confusion"><option value="0">Нет</option><option value="1">Да</option></select></div><div class="field"><label>PaO₂, мм рт. ст. (необязательно)</label><input id="pao2" type="number" placeholder="—"></div>
+<div class="field"><label>SpO₂, % (необязательно)</label><input id="spo2" type="number" placeholder="—"></div><div class="field"><label>PaO₂/FiO₂ (необязательно)</label><input id="mpf" type="number" placeholder="—"></div>
+<div class="field"><label>Артериальный pH</label><input id="ph" type="number" step=".01" value="7.40"></div></div>
+<div class="result" id="smartOut"></div><div class="actions"><button class="secondary" id="saveSmart">Сохранить SMART-COP</button></div><p class="muted">SMART-COP: 0–2 низкий риск; 3–4 средний; 5–6 высокий; ≥7 очень высокий риск потребности в интенсивной респираторной/вазопрессорной поддержке. В российской таблице пороги ЧДД указаны как &gt;25/мин при возрасте ≤50 лет и &gt;30/мин при возрасте &gt;50 лет. Показатели PaO₂, SpO₂ и PaO₂/FiO₂ — альтернативные критерии оксигенации, не суммируются между собой.</p>
+<hr><h2>Шкала комы Глазго · GCS</h2>
+<div class="grid">
+<div class="field"><label>Открывание глаз · E</label><select id="gcsE"><option value="4">4 — спонтанно</option><option value="3">3 — на обращение/звук</option><option value="2">2 — на боль</option><option value="1">1 — отсутствует</option></select></div>
+<div class="field"><label>Речевая реакция · V</label><select id="gcsV"><option value="5">5 — ориентирован</option><option value="4">4 — спутанная речь</option><option value="3">3 — отдельные слова</option><option value="2">2 — нечленораздельные звуки</option><option value="1">1 — отсутствует</option><option value="0">Невозможно оценить (NT)</option></select></div>
+<div class="field"><label>Двигательная реакция · M</label><select id="gcsM"><option value="6">6 — выполняет команды</option><option value="5">5 — локализует боль</option><option value="4">4 — отдёргивание</option><option value="3">3 — патологическое сгибание</option><option value="2">2 — разгибание</option><option value="1">1 — отсутствует</option></select></div>
+</div><div class="result" id="gcsOut"></div><p class="muted">При интубации/афазии/седации указывайте невозможность оценить соответствующий компонент (NT), не подменяйте его баллом 1 и не рассчитывайте некорректную сумму.</p>
+<hr><h2>FOUR Score</h2><div class="grid">
+<div class="field"><label>Глаза · E</label><select id="fourE"><option value="4">4 — открывает, следит / моргает по команде</option><option value="3">3 — открыты, но не следит</option><option value="2">2 — открывает на громкий голос</option><option value="1">1 — открывает на боль</option><option value="0">0 — не открывает на боль</option></select></div>
+<div class="field"><label>Двигательная реакция · M</label><select id="fourM"><option value="4">4 — жест по команде</option><option value="3">3 — локализует боль</option><option value="2">2 — сгибание на боль</option><option value="1">1 — разгибание на боль</option><option value="0">0 — нет ответа / миоклонус</option></select></div>
+<div class="field"><label>Стволовые рефлексы · B</label><select id="fourB"><option value="4">4 — зрачковые и корнеальные сохранены</option><option value="3">3 — один широкий фиксированный зрачок</option><option value="2">2 — отсутствует зрачковый или корнеальный</option><option value="1">1 — отсутствуют оба</option><option value="0">0 — отсутствуют зрачковый, корнеальный и кашлевой</option></select></div>
+<div class="field"><label>Дыхание · R</label><select id="fourR"><option value="4">4 — не интубирован, дыхание регулярное</option><option value="3">3 — не интубирован, Чейна–Стокса</option><option value="2">2 — не интубирован, нерегулярное</option><option value="1">1 — интубирован, дышит выше частоты аппарата</option><option value="0">0 — частота аппарата или апноэ</option></select></div>
+</div><div class="result" id="fourOut"></div>
+<hr><h2>RASS · Richmond Agitation-Sedation Scale</h2>
+<div class="field"><label>Выберите наиболее подходящее состояние</label><select id="rass">
+<option value="0">0 — спокоен, бодрствует</option><option value="1">+1 — беспокоен</option><option value="2">+2 — возбуждён</option><option value="3">+3 — выраженное возбуждение</option><option value="4">+4 — агрессивен, опасен</option><option value="-1">−1 — сонлив, устойчиво пробуждается на голос (&gt;10 с)</option><option value="-2">−2 — лёгкая седация, краткий контакт на голос (&lt;10 с)</option><option value="-3">−3 — умеренная седация, движение/открывание глаз на голос без контакта</option><option value="-4">−4 — глубокая седация, ответ только на физическую стимуляцию</option><option value="-5">−5 — не пробуждается</option></select></div>
+<div class="result" id="rassOut"></div>
+</div></section>
+
+<section id="airway"><div class="card"><h2>Оценка трудных дыхательных путей</h2>
+<p class="muted">Предоперационный скрининг анатомических предикторов. Оценки не заменяют клинический осмотр, предыдущую документацию об интубации и планирование первичной/резервной стратегии.</p>
+<h3>МОСКВА-TD · трудная интубация</h3>
+<div class="grid">
+<div class="field"><label>Маллампати</label><select id="mosMall"><option value="0">I–II (0)</option><option value="1">III (1)</option><option value="2">IV (2)</option></select></div>
+<div class="field"><label>Открывание рта</label><select id="mosMouth"><option value="0">≥4 см (0)</option><option value="1">&lt;4 см (1)</option></select></div>
+<div class="field"><label>Ограничение сгибания/разгибания головы</label><select id="mosNeck"><option value="0">Нет (0)</option><option value="1">Есть (1)</option></select></div>
+<div class="field"><label>Анатомические особенности / короткая шея / ожирение</label><select id="mosAnat"><option value="0">Нет (0)</option><option value="1">Есть (1)</option></select></div>
+<div class="field"><label>Выдвижение нижней челюсти</label><select id="mosJaw"><option value="0">Сохранено (0)</option><option value="1">Ограничено (1)</option></select></div>
+<div class="field"><label>Трудная интубация / СОАС / храп в анамнезе</label><select id="mosHx"><option value="0">Нет (0)</option><option value="1">Есть (1)</option></select></div>
+<div class="field"><label>Тироментальная дистанция</label><select id="mosTmd"><option value="0">&gt;6 см (0)</option><option value="1">≤6 см (1)</option></select></div>
+</div><div class="result" id="mosOut"></div>
+<hr><h3>LEMON · трудная интубация</h3><div class="grid">
+<div class="field"><label>L — внешний осмотр, аномалии лица/шеи</label><select id="lemL"><option value="0">Нет</option><option value="1">Есть</option></select></div>
+<div class="field"><label>E — межрезцовое расстояние &lt;3 пальцев</label><select id="lemE1"><option value="0">Нет</option><option value="1">Есть</option></select></div>
+<div class="field"><label>E — подбородок–подъязычная кость &lt;3 пальцев</label><select id="lemE2"><option value="0">Нет</option><option value="1">Есть</option></select></div>
+<div class="field"><label>E — подъязычная кость–щитовидная вырезка &lt;2 пальцев</label><select id="lemE3"><option value="0">Нет</option><option value="1">Есть</option></select></div>
+<div class="field"><label>M — Маллампати III–IV</label><select id="lemM"><option value="0">Нет</option><option value="1">Есть</option></select></div>
+<div class="field"><label>O — обструкция / ожирение</label><select id="lemO"><option value="0">Нет</option><option value="1">Есть</option></select></div>
+<div class="field"><label>N — ограниченная подвижность шеи</label><select id="lemN"><option value="0">Нет</option><option value="1">Есть</option></select></div>
+<div class="field"><label>Тест выдвижения нижней челюсти нарушен</label><select id="lemJ"><option value="0">Нет</option><option value="1">Есть</option></select></div>
+</div><div class="result" id="lemonOut"></div><p class="muted">LEMON — мнемоника факторов риска; количество положительных пунктов не является универсально валидированным пороговым баллом.</p>
+<hr><h3>El-Ganzouri Risk Index · EGRI</h3><div class="grid">
+<div class="field"><label>Открывание рта</label><select id="egMouth"><option value="0">≥4 см (0)</option><option value="1">&lt;4 см (1)</option></select></div>
+<div class="field"><label>Тироментальная дистанция</label><select id="egTmd"><option value="0">&gt;6,5 см (0)</option><option value="1">6,0–6,5 см (1)</option><option value="2">&lt;6 см (2)</option></select></div>
+<div class="field"><label>Маллампати</label><select id="egMall"><option value="0">I (0)</option><option value="1">II (1)</option><option value="2">III–IV (2)</option></select></div>
+<div class="field"><label>Подвижность шеи</label><select id="egNeck"><option value="0">&gt;90° (0)</option><option value="1">80–90° (1)</option><option value="2">&lt;80° (2)</option></select></div>
+<div class="field"><label>Прогнатия</label><select id="egJaw"><option value="0">Сохранена (0)</option><option value="1">Нарушена (1)</option></select></div>
+<div class="field"><label>Масса тела</label><select id="egWeight"><option value="0">&lt;90 кг (0)</option><option value="1">90–110 кг (1)</option><option value="2">&gt;110 кг (2)</option></select></div>
+<div class="field"><label>Трудная интубация в анамнезе</label><select id="egHx"><option value="0">Нет (0)</option><option value="1">Сомнительно (1)</option><option value="2">Определённо (2)</option></select></div>
+</div><div class="result" id="egOut"></div><p class="muted">EGRI: 0–12 баллов; ≥4 баллов обычно рассматривается как повышенный риск трудной интубации. Пороговые значения зависят от версии/популяции; шкала не заменяет клиническое решение.</p>
+<hr><h3>MOANS · трудная масочная вентиляция</h3><div class="grid">
+<div class="field"><label>M — нарушено прилегание маски (борода, деформация лица)</label><select id="moM"><option value="0">Нет</option><option value="1">Есть</option></select></div>
+<div class="field"><label>O — ожирение / обструкция</label><select id="moO"><option value="0">Нет</option><option value="1">Есть</option></select></div>
+<div class="field"><label>A — возраст &gt;55 лет</label><select id="moA"><option value="0">Нет</option><option value="1">Есть</option></select></div>
+<div class="field"><label>N — отсутствие зубов</label><select id="moN"><option value="0">Нет</option><option value="1">Есть</option></select></div>
+<div class="field"><label>S — сниженная податливость лёгких / высокое сопротивление</label><select id="moS"><option value="0">Нет</option><option value="1">Есть</option></select></div>
+</div><div class="result" id="moansOut"></div>
+<hr><h3>OBESE · факторы риска трудной масочной вентиляции</h3><div class="grid">
+<div class="field"><label>O — ожирение</label><select id="obO"><option value="0">Нет</option><option value="1">Есть</option></select></div>
+<div class="field"><label>B — борода</label><select id="obB"><option value="0">Нет</option><option value="1">Есть</option></select></div>
+<div class="field"><label>E — отсутствие зубов</label><select id="obE"><option value="0">Нет</option><option value="1">Есть</option></select></div>
+<div class="field"><label>S — храп / СОАС</label><select id="obS"><option value="0">Нет</option><option value="1">Есть</option></select></div>
+<div class="field"><label>E — возраст &gt;55 лет</label><select id="obE2"><option value="0">Нет</option><option value="1">Есть</option></select></div>
+</div><div class="result" id="obeseOut"></div>
+<div class="notice red"><b>Важно:</b> MOANS и OBESE — мнемоники факторов риска, а не валидированные универсальные балльные шкалы с единым порогом. Не интерпретируйте сумму факторов как точную вероятность. Учитывайте физиологически трудные дыхательные пути, риск аспирации, запас оксигенации, гемодинамику, позиционирование, доступность видеоларингоскопии и план спасения оксигенации.</div>
+</div></section>
+
+<section id="infusion"><div class="card"><h2>Расчёт микроструйной инфузии</h2><p class="muted">Введите количество действующего вещества в шприце (мг) и конечный объём раствора (мл). Выберите, что рассчитывать: дозу по скорости насоса или скорость насоса по дозе.</p>
+<div class="grid"><div class="field"><label>Сохранённый препарат</label><select id="drugSelect"></select></div><div class="field"><label>Масса, кг</label><input id="iWeight" type="number" value="70" min="1"></div>
+<div class="field"><label>Количество препарата, мг</label><input id="iAmount" type="number" value="5" min=".000001" step="any"></div><div class="field"><label>Конечный объём раствора, мл</label><input id="iVolume" type="number" value="50" min=".001" step="any"></div>
+<div class="field"><label>Режим расчёта</label><select id="iMode"><option value="dose">Рассчитать дозу по скорости (мл/ч)</option><option value="rate">Рассчитать скорость по дозе</option></select></div>
+<div class="field" id="iRateWrap"><label>Скорость насоса, мл/ч</label><input id="iRate" type="number" value="4.2" min="0" step="any"></div>
+<div class="field" id="iDoseWrap"><label>Целевая доза</label><input id="iDose" type="number" value=".1" min="0" step="any"></div>
+<div class="field"><label>Единицы дозы</label><select id="iUnit"><option value="mcgkgmin">мкг/кг/мин</option><option value="mcgkgh">мкг/кг/ч</option><option value="mgkgmin">мг/кг/мин</option><option value="mgkgh">мг/кг/ч</option><option value="mcgmin">мкг/мин</option><option value="mgh">мг/ч</option></select></div></div>
+<div class="result" id="infOut"></div><div class="actions"><button class="primary" id="saveInf">Сохранить расчёт в историю</button></div>
+<div class="notice red">Проверяйте, что введено именно количество действующего вещества, а не соли/раствора, и что конечный объём указан после разведения. Этот универсальный пересчёт не подходит для ЕД/мин, ЕД/ч, мкг/кг/мин при концентрации в ЕД/мл и иных несовместимых единиц (например, вазопрессин). Необходима независимая проверка препарата, единиц, разведения и назначения.</div></div></section>
+
+<section id="history"><div class="card"><h2>История расчётов</h2><p class="muted">Хранится только в локальном браузере на этом устройстве. Не вводите ФИО, даты рождения, номера историй болезни и другие идентификаторы пациента.</p><div id="historyList"></div><div class="actions"><button class="danger" id="clearHistory">Очистить историю</button></div></div></section>
+
+<section id="drugs"><div class="card"><h2>Мои стандартные разведения препаратов</h2><div class="grid"><div class="field"><label>Название</label><input id="drugName" placeholder="Например, норадреналин"></div><div class="field"><label>Количество препарата, мг</label><input id="drugAmount" type="number" min=".000001" step="any" placeholder="5"></div><div class="field"><label>Конечный объём, мл</label><input id="drugVolume" type="number" min=".001" step="any" placeholder="50"></div></div><div class="actions"><button class="primary" id="addDrug">Добавить</button></div><hr><div id="drugList"></div></div>
+<div class="card"><h3>Локальные данные</h3><p class="muted">История и концентрации сохраняются в localStorage браузера и не синхронизируются между iPhone и ПК. Очистка данных сайта может удалить их. Не используйте персональные данные пациентов.</p><span class="pill">Без передачи на сервер</span></div></section>
+<footer class="muted" style="padding:18px 4px">Вспомогательный расчётный инструмент. Не является медицинским изделием и не заменяет клиническое решение, локальные протоколы, официальные инструкции и независимую проверку назначения.</footer>
+</main>
+<script>
+const $=id=>document.getElementById(id),n=id=>Number($(id).value),v=id=>$(id).value;
+const f=(x,d=1)=>Number.isFinite(x)?x.toFixed(d).replace('.',','):'—';
+let history=JSON.parse(localStorage.getItem('oarHistory')||'[]');
+let drugs=JSON.parse(localStorage.getItem('oarDrugs')||'null')||[{name:'Норадреналин',amountMg:5,volumeMl:50},{name:'Адреналин',amountMg:5,volumeMl:50},{name:'Добутамин',amountMg:250,volumeMl:50},{name:'Пропофол',amountMg:500,volumeMl:50},{name:'Дексмедетомидин',amountMg:0.2,volumeMl:50},{name:'Мидазолам',amountMg:50,volumeMl:50}];
+const esc=s=>String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+function persist(){localStorage.setItem('oarHistory',JSON.stringify(history));localStorage.setItem('oarDrugs',JSON.stringify(drugs))}
+function record(type,inputs,result){history.unshift({date:new Date().toLocaleString('ru-RU'),type,inputs,result});history=history.slice(0,100);persist();drawHistory()}
+document.querySelectorAll('nav button').forEach(b=>b.onclick=()=>{document.querySelectorAll('nav button').forEach(x=>x.classList.toggle('active',x===b));document.querySelectorAll('main section').forEach(s=>s.classList.toggle('active',s.id===b.dataset.tab));if(b.dataset.tab==='history')drawHistory();if(b.dataset.tab==='drugs')drawDrugs()});
+function mass(){let h=n('height'),w=n('weight');if(h<=0||w<=0)return;let ibw=(v('sex')==='m'?50:45.5)+.9*(h-152.4),bmi=w/(h/100)**2,adj=ibw+.4*(w-ibw);$('massOut').innerHTML=`<div class="grid"><div><span class="muted">ИМТ</span><br><strong>${f(bmi,1)} кг/м²</strong></div><div><span class="muted">IBW / PBW</span><br><strong>${f(ibw,1)} кг</strong></div><div><span class="muted">AdjBW (0,4)</span><br><strong>${f(adj,1)} кг</strong></div></div>`}
+function renal(){
+ let age=n('age'),cr=n('creat'),wt=n('rweight'),female=v('rsex')==='f';
+ if(age<18||cr<=0||wt<=0){$('renalOut').textContent='Проверьте возраст, креатинин и массу.';return}
+ let scr=v('crunit')==='umol'?cr/88.4:cr,k=female?.7:.9,a=female?-.241:-.302;
+ let egfr=142*Math.pow(Math.min(scr/k,1),a)*Math.pow(Math.max(scr/k,1),-1.2)*Math.pow(.9938,age)*(female?1.012:1);
+ let cg=(140-age)*wt/(72*scr)*(female?.85:1);
+ let cat=egfr>=90?['G1','Нормальная или высокая']:egfr>=60?['G2','Незначительно сниженная']:egfr>=45?['G3a','Умеренно сниженная']:egfr>=30?['G3b','Умеренно/значительно сниженная']:egfr>=15?['G4','Значительно сниженная']:['G5','Почечная недостаточность'];
+ $('renalOut').innerHTML=`<div class="grid"><div><span class="muted">CKD-EPI 2021</span><br><strong>${f(egfr,1)}</strong><div class="muted">мл/мин/1,73 м²</div></div><div><span class="muted">Cockcroft–Gault</span><br><strong>${f(cg,1)}</strong><div class="muted">мл/мин</div></div><div><span class="muted">Категория СКФ</span><br><strong>${cat[0]}</strong><div class="muted">${cat[1]}</div></div></div>`;
+ $('ckdInfo').innerHTML=`<b>Градация KDIGO:</b> G1 ≥90; G2 60–89; G3a 45–59; G3b 30–44; G4 15–29; G5 &lt;15 мл/мин/1,73 м². <b>Важно:</b> категории G1–G2 сами по себе не означают ХБП без других маркеров повреждения почек; для диагноза ХБП изменения должны сохраняться ≥3 месяцев. Полная классификация риска также учитывает альбуминурию A1–A3.`;
+}
+function aki(){
+ const base=n('akiBase'),cur=n('akiCurrent'),wt=n('akiWeight'),uo=n('akiUo'),dur=n('akiDuration'),unit=v('akiUnit'),window=v('akiWindow'),rrt=v('akiRrt')==='1';
+ if(cur<=0||wt<=0||uo<0||dur<0){$('akiOut').textContent='Проверьте исходные данные.';return}
+ const factor=unit==='umol'?1:88.4, b=base*factor, c=cur*factor;
+ let stageCr=0,crWhy='Критерии по креатинину не достигнуты';
+ if(base>0){
+   const ratio=c/b,delta=c-b;
+   if(window==='48'&&delta>=26.5) {stageCr=1;crWhy='Прирост креатинина ≥26,5 мкмоль/л за ≤48 ч'}
+   if(window!=='other'&&ratio>=1.5&&ratio<2){stageCr=Math.max(stageCr,1);crWhy='Креатинин 1,5–1,9× исходного'}
+   if(window!=='other'&&ratio>=2&&ratio<3){stageCr=Math.max(stageCr,2);crWhy='Креатинин 2,0–2,9× исходного'}
+   if(window!=='other'&&ratio>=3){stageCr=3;crWhy='Креатинин ≥3× исходного'}
+ }
+ if(c>=353.6&&base>0&&window!=='other') {stageCr=3;crWhy='Текущий креатинин ≥353,6 мкмоль/л'}
+ let stageUo=0,uoWhy='Критерии по диурезу не достигнуты';
+ if(uo<0.5&&dur>=6&&dur<12){stageUo=1;uoWhy='Диурез <0,5 мл/кг/ч в течение 6–12 ч'}
+ if(uo<0.5&&dur>=12){stageUo=2;uoWhy='Диурез <0,5 мл/кг/ч в течение ≥12 ч'}
+ if(uo<0.3&&dur>=24){stageUo=3;uoWhy='Диурез <0,3 мл/кг/ч в течение ≥24 ч'}
+ if(uo===0&&dur>=12){stageUo=3;uoWhy='Анурия в течение ≥12 ч'}
+ const stage=Math.max(stageCr,stageUo,rrt?3:0);
+ const label=stage===0?'Критерии ОПП по введённым данным не выявлены':`ОПП KDIGO · стадия ${stage}`;
+ const why=[stageCr?crWhy:null,stageUo?uoWhy:null,rrt?'Начата заместительная почечная терапия':null].filter(Boolean);
+ $('akiOut').innerHTML=`<strong>${label}</strong><p class="muted">Критерий креатинина: ${crWhy}.<br>Критерий диуреза: ${uoWhy}.${rrt?'<br>ЗПТ: да.':''}</p><p>${why.length?'Основание для максимальной стадии:<br>'+why.join('<br>'):'Нет выполненных критериев KDIGO по введённым параметрам.'}</p>`;
+}
+function potassium(){
+ let k=n('klevel'),wt=n('kweight'),target=n('ktarget');
+ if(k<=0||wt<=0||target<=k||target>6){
+   $('kOut').textContent='Проверьте данные: масса должна быть больше 0 кг, целевой K⁺ должен быть выше текущего и не превышать 6,0 ммоль/л.';
+   return;
+ }
+ const mmol=wt*0.2*(target-k);
+ const kclMg=mmol*74.5513;
+ const kcl4ml=kclMg/40;
+ const dailyCap=wt*3;
+ $('kOut').innerHTML=`<div class="grid">
+ <div><span class="muted">Ориентировочное количество K⁺ для перехода ${f(k,1)} → ${f(target,1)} ммоль/л</span><br><strong>${f(mmol,1)} ммоль</strong></div>
+ <div><span class="muted">Эквивалент массы KCl</span><br><strong>${f(kclMg,0)} мг</strong></div>
+ <div><span class="muted">Эквивалент объёма KCl 4%</span><br><strong>${f(kcl4ml,1)} мл</strong></div>
+ <div><span class="muted">Справочный ориентир 3 ммоль/кг/24 ч</span><br><strong>${f(dailyCap,0)} ммоль/24 ч</strong></div>
+ </div>
+ <p class="muted">Расчёт выполнен для выбранного целевого K⁺ ${f(target,1)} ммоль/л. Эквивалент KCl 4% рассчитан из содержания 40 мг KCl/мл. Суточный ориентир показан только для сопоставления и не является назначением или индивидуально разрешённым максимумом.</p>`;
+}
+function sofa(){let g=n('gcs'),del=v('delirium')==='1',pf=n('pf'),adv=v('advanced')==='1',ecmo=v('ecmo')==='1',map=n('map'),ne=n('ne'),other=v('otherVaso')==='1',circ=v('circSupport')==='1',bil=n('bilirubin'),cr=n('sCr'),uoD=Number(v('uoDuration')),rrt=v('rrt')==='1',plt=n('platelets');
+let brain=g>=15?(del?1:0):g>=13?1:g>=9?2:g>=6?3:4;
+let resp=0;if(ecmo)resp=4;else if(pf<=75&&adv)resp=4;else if(pf<=150&&adv)resp=3;else if(pf<=225)resp=2;else if(pf<=300)resp=1;
+let cv=0;if(circ||ne>.4)cv=4;else if(ne>.2)cv=other?4:3;else if(ne>0)cv=other?3:2;else if(other)cv=2;else if(map<70)cv=1;
+let liver=bil<=20.6?0:bil<=51.3?1:bil<=102.6?2:bil<=205?3:4;
+let kidney=rrt?4:cr>300?3:cr>170?2:cr>110?1:0;if(uoD===4)kidney=Math.max(kidney,3);else if(uoD===3)kidney=Math.max(kidney,3);else if(uoD===2)kidney=Math.max(kidney,2);else if(uoD===1)kidney=Math.max(kidney,1);
+let hemo=plt>150?0:plt>100?1:plt>80?2:plt>50?3:4;
+let rows=[['Мозг',brain],['Дыхание',resp],['Сердечно-сосудистая',cv],['Печень',liver],['Почки',kidney],['Гемостаз',hemo]],sum=rows.reduce((a,x)=>a+x[1],0);
+$('sofaOut').innerHTML=`<div class="grid">${rows.map(x=>`<div><span class="muted">${x[0]}</span><br><strong>${x[1]} / 4</strong></div>`).join('')}</div><hr><span class="muted">SOFA-2, сумма</span><br><strong>${sum} / 24</strong>`;
+}
+function smart(){let age=n('mcAge'),sbp=n('sbp'),multi=v('multilobar')==='1',alb=n('albumin'),rr=n('rr'),hr=n('hr'),conf=v('confusion')==='1',pao=v('pao2')===''?null:n('pao2'),spo=v('spo2')===''?null:n('spo2'),pf=v('mpf')===''?null:n('mpf'),ph=n('ph'),items=[];
+if(sbp<90)items.push(['S: САД <90',2]);if(multi)items.push(['M: мультилобарная инфильтрация',1]);if(alb>0&&alb<35)items.push(['A: альбумин <35 г/л',1]);if(rr>(age<=50?25:30))items.push(['R: тахипноэ',1]);if(hr>125)items.push(['T: ЧСС >125',1]);if(conf)items.push(['C: нарушение сознания',1]);
+let oxy=(pao!==null&&pao<(age<=50?70:60))||(spo!==null&&spo<(age<=50?94:90))||(pf!==null&&pf<(age<=50?333:250));if(oxy)items.push(['O: нарушение оксигенации',2]);if(ph>0&&ph<7.35)items.push(['P: pH <7,35',2]);let total=items.reduce((a,x)=>a+x[1],0),risk=total<=2?'Низкий':total<=4?'Средний':total<=6?'Высокий':'Очень высокий';$('smartOut').innerHTML=`<strong>${total} баллов · ${risk} риск</strong><p class="muted">${items.length?items.map(x=>`${x[0]} — ${x[1]} б.`).join('<br>'):'Критерии по введённым данным не набраны.'}</p>`}
+function neuroScales(){
+ let e=Number(v('gcsE')),vv=Number(v('gcsV')),m=Number(v('gcsM'));
+ $('gcsOut').innerHTML=vv===0?`<strong>GCS: E${e} V-NT M${m}</strong><p class="muted">Суммарный балл не рассчитывается: речевой компонент невозможно оценить.</p>`:`<strong>GCS ${e+vv+m}/15 · E${e} V${vv} M${m}</strong>`;
+ const four=['fourE','fourM','fourB','fourR'].reduce((a,id)=>a+n(id),0);
+ $('fourOut').innerHTML=`<strong>FOUR Score: ${four}/16</strong><p class="muted">E${v('fourE')} + M${v('fourM')} + B${v('fourB')} + R${v('fourR')}</p>`;
+ const rass=Number(v('rass'));
+ const rassText={'4':'Агрессивен, непосредственная опасность','3':'Выраженное возбуждение','2':'Возбуждён','1':'Беспокоен','0':'Спокоен и бодрствует','-1':'Сонливость','-2':'Лёгкая седация','-3':'Умеренная седация','-4':'Глубокая седация','-5':'Не пробуждается'};
+ $('rassOut').innerHTML=`<strong>RASS ${rass>0?'+':''}${rass}</strong> · ${rassText[rass]}`;
+}
+function airway(){
+ const sum=ids=>ids.reduce((a,id)=>a+n(id),0);
+ const mos=sum(['mosMall','mosMouth','mosNeck','mosAnat','mosJaw','mosHx','mosTmd']);
+ let mLabel=mos===0?'Риск по этой шкале низкий':mos<=2?'Возможна трудная интубация':mos<=4?'Высокая вероятность трудной интубации':'Высокий риск; заранее продумать альтернативную стратегию';
+ $('mosOut').innerHTML=`<strong>МОСКВА-TD: ${mos} баллов</strong><p class="muted">${mLabel}. Диапазон 0–8.</p>`;
+ const lemon=sum(['lemL','lemE1','lemE2','lemE3','lemM','lemO','lemN','lemJ']);
+ $('lemonOut').innerHTML=`<strong>LEMON: ${lemon}/8 факторов</strong><p class="muted">Положительные факторы: ${lemon}. Это структурированный чек-лист, не вероятность в процентах.</p>`;
+ const eg=sum(['egMouth','egTmd','egMall','egNeck','egJaw','egWeight','egHx']);
+ $('egOut').innerHTML=`<strong>El-Ganzouri: ${eg}/12</strong><p class="muted">${eg>=4?'Повышенный риск трудной интубации (ориентир ≥4 баллов).':'Порог ≥4 баллов не достигнут; риск не исключён.'}</p>`;
+ const mo=sum(['moM','moO','moA','moN','moS']);
+ $('moansOut').innerHTML=`<strong>MOANS: ${mo}/5 факторов</strong><p class="muted">${mo>=3?'Несколько факторов: повышенная настороженность в отношении трудной масочной вентиляции.':'Факторов меньше трёх; трудная вентиляция всё равно не исключена.'}</p>`;
+ const ob=sum(['obO','obB','obE','obS','obE2']);
+ $('obeseOut').innerHTML=`<strong>OBESE: ${ob}/5 факторов</strong><p class="muted">Положительные факторы: ${ob}. Мнемоника для выявления факторов риска, не валидированная количественная шкала.</p>`;
+}
+function unitName(u){return ({mcgkgmin:'мкг/кг/мин',mcgkgh:'мкг/кг/ч',mgkgmin:'мг/кг/мин',mgkgh:'мг/кг/ч',mcgmin:'мкг/мин',mgh:'мг/ч'})[u]}
+function infusion(){
+ let wt=n('iWeight'),amount=n('iAmount'),vol=n('iVolume'),dose=n('iDose'),rate=n('iRate'),u=v('iUnit'),mode=v('iMode');
+ if(wt<=0||amount<=0||vol<=0){$('infOut').textContent='Введите массу, количество препарата и конечный объём раствора больше нуля.';return}
+ const conc=amount/vol;
+ const mult={mcgkgmin:wt*60/1000,mcgkgh:wt/1000,mgkgmin:wt*60,mgkgh:wt,mcgmin:60/1000,mgh:1}[u];
+ let mgph,mlph,shownDose;
+ if(mode==='dose'){
+   if(rate<0){$('infOut').textContent='Скорость не может быть отрицательной.';return}
+   mlph=rate;mgph=mlph*conc;shownDose=mgph/mult;
+   $('iDose').value=f(shownDose,5).replace(',','.');
+ }else{
+   if(dose<0){$('infOut').textContent='Доза не может быть отрицательной.';return}
+   shownDose=dose;mgph=dose*mult;mlph=mgph/conc;
+   $('iRate').value=f(mlph,3).replace(',','.');
+ }
+ $('infOut').innerHTML=`<div class="grid"><div><span class="muted">Концентрация раствора</span><br><strong>${f(conc,4)} мг/мл</strong></div><div><span class="muted">Массовая скорость</span><br><strong>${f(mgph,4)} мг/ч</strong></div><div><span class="muted">Скорость насоса</span><br><strong>${f(mlph,2)} мл/ч</strong></div><div><span class="muted">Доза</span><br><strong>${f(shownDose,4)} ${unitName(u)}</strong></div></div><p class="muted">${f(amount,3)} мг препарата в ${f(vol,2)} мл раствора · масса ${f(wt,1)} кг.</p>`;
+}
+function drawDrugs(){
+ $('drugSelect').innerHTML=drugs.map((d,i)=>`<option value="${i}">${esc(d.name)} · ${f(d.amountMg??(d.conc||0)*50,2)} мг/${f(d.volumeMl??50,1)} мл</option>`).join('');
+ $('drugList').innerHTML=drugs.map((d,i)=>`<div class="actions" style="justify-content:space-between"><span>${esc(d.name)} — <b>${f(d.amountMg??(d.conc||0)*50,2)} мг / ${f(d.volumeMl??50,1)} мл</b></span><button class="secondary" onclick="removeDrug(${i})">Удалить</button></div>`).join('');
+}
+function removeDrug(i){drugs.splice(i,1);persist();drawDrugs()}
+function drawHistory(){$('historyList').innerHTML=history.length?history.map(x=>`<div class="card"><b>${esc(x.type)}</b><div class="muted">${esc(x.date)}</div><div>${esc(x.inputs)}</div><b>${esc(x.result)}</b></div>`).join(''):'<p class="muted">История пока пуста.</p>'}
+$('drugSelect').onchange=()=>{let d=drugs[Number(v('drugSelect'))];if(d){$('iAmount').value=d.amountMg??((d.conc||0)*50);$('iVolume').value=d.volumeMl??50;infusion()}};
+$('addDrug').onclick=()=>{let name=v('drugName').trim(),amountMg=n('drugAmount'),volumeMl=n('drugVolume');if(!name||amountMg<=0||volumeMl<=0){alert('Введите название, количество препарата и конечный объём больше нуля.');return}drugs.push({name,amountMg,volumeMl});persist();$('drugName').value='';$('drugAmount').value='';$('drugVolume').value='';drawDrugs()};
+$('saveInf').onclick=()=>{let d=drugs[Number(v('drugSelect'))];record('Инфузомат',`${d?.name||'Препарат'}; ${v('iAmount')} мг / ${v('iVolume')} мл; масса ${v('iWeight')} кг; режим ${v('iMode')}`,$('infOut').innerText)};
+$('saveMass').onclick=()=>record('Антропометрия',`Пол: ${v('sex')}; рост: ${v('height')} см; масса: ${v('weight')} кг`,$('massOut').innerText);
+$('saveRenal').onclick=()=>record('СКФ / клиренс',`Пол: ${v('rsex')}; возраст: ${v('age')}; креатинин: ${v('creat')} ${v('crunit')}; масса: ${v('rweight')} кг`,$('renalOut').innerText);
+$('saveAki').onclick=()=>record('ОПП KDIGO',`Исходный Cr ${v('akiBase')}; текущий Cr ${v('akiCurrent')} ${v('akiUnit')}; диурез ${v('akiUo')} мл/кг/ч × ${v('akiDuration')} ч`,$('akiOut').innerText);
+$('saveK').onclick=()=>record('Ориентировочный дефицит калия',`K⁺ ${v('klevel')} ммоль/л; целевой K⁺ ${v('ktarget')} ммоль/л; масса ${v('kweight')} кг`,$('kOut').innerText);
+$('saveSofa').onclick=()=>record('SOFA-2',`GCS ${v('gcs')}; PaO₂/FiO₂ ${v('pf')}; MAP ${v('map')}; NE+E ${v('ne')} мкг/кг/мин`,$('sofaOut').innerText);
+$('saveSmart').onclick=()=>record('SMART-COP',`Возраст ${v('mcAge')}; САД ${v('sbp')}; ЧДД ${v('rr')}; ЧСС ${v('hr')}`,$('smartOut').innerText);
+
+$('clearHistory').onclick=()=>{if(confirm('Удалить всю локальную историю?')){history=[];persist();drawHistory()}};
+[['sex','height','weight'],['rsex','age','creat','crunit','rweight'],['klevel','kweight','ktarget'],['gcs','delirium','pf','advanced','ecmo','map','ne','otherVaso','circSupport','bilirubin','sCr','uo','uoDuration','rrt','platelets'],['mcAge','sbp','multilobar','albumin','rr','hr','confusion','pao2','spo2','mpf','ph'],['iWeight','iAmount','iVolume','iDose','iRate','iUnit','iMode'],['akiBase','akiCurrent','akiUnit','akiWindow','akiWeight','akiUo','akiDuration','akiRrt'],['gcsE','gcsV','gcsM','fourE','fourM','fourB','fourR','rass'],['mosMall','mosMouth','mosNeck','mosAnat','mosJaw','mosHx','mosTmd','lemL','lemE1','lemE2','lemE3','lemM','lemO','lemN','lemJ','egMouth','egTmd','egMall','egNeck','egJaw','egWeight','egHx','moM','moO','moA','moN','moS','obO','obB','obE','obS','obE2']].forEach((ids,i)=>ids.forEach(id=>$(id).addEventListener('input',[mass,renal,potassium,sofa,smart,infusion,aki,neuroScales,airway][i])));
+mass();renal();potassium();sofa();smart();aki();neuroScales();airway();drawDrugs();infusion();$('iMode').onchange=()=>{$('iRateWrap').style.display=v('iMode')==='dose'?'block':'none';$('iDoseWrap').style.display=v('iMode')==='rate'?'block':'none';infusion()};$('iMode').onchange();
+if('serviceWorker'in navigator&&location.protocol.startsWith('http'))navigator.serviceWorker.register('./sw.js').catch(()=>{});
+</script></body></html>
